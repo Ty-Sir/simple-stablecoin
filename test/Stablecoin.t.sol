@@ -30,23 +30,11 @@ contract MockV3Aggregator is AggregatorV3Interface {
         return 1;
     }
 
-    function getRoundData(
-        uint80
-    )
-        external
-        view
-        override
-        returns (uint80, int256, uint256, uint256, uint80)
-    {
+    function getRoundData(uint80) external view override returns (uint80, int256, uint256, uint256, uint80) {
         return (0, _price, block.timestamp, block.timestamp, 0);
     }
 
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80, int256, uint256, uint256, uint80)
-    {
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         return (0, _price, block.timestamp, block.timestamp, 0);
     }
 }
@@ -64,12 +52,7 @@ contract SimpleStablecoinTest is Test {
     uint256 public constant INITIAL_ETH_BALANCE = 100 ether;
 
     event VaultUpdated(address indexed user, uint256 collateral, uint256 debt);
-    event Liquidated(
-        address indexed user,
-        address indexed liquidator,
-        uint256 debt,
-        uint256 collateralSeized
-    );
+    event Liquidated(address indexed user, address indexed liquidator, uint256 debt, uint256 collateralSeized);
 
     function setUp() public {
         // Deploy mock price feed and stablecoin
@@ -96,8 +79,7 @@ contract SimpleStablecoinTest is Test {
         // At 150% collateral ratio, maximum debt is:
         // (2000 * 10000) / 15000 = 1333.33...
         uint256 collateralValue = (ethToMint * uint256(INITIAL_PRICE)) / 1e8;
-        uint256 expectedTokens = (collateralValue *
-            stablecoin.RATIO_PRECISION()) / stablecoin.COLLATERAL_RATIO();
+        uint256 expectedTokens = (collateralValue * stablecoin.RATIO_PRECISION()) / stablecoin.COLLATERAL_RATIO();
 
         vm.startPrank(user1);
 
@@ -120,8 +102,7 @@ contract SimpleStablecoinTest is Test {
 
         // Add more collateral (0.5 ETH)
         stablecoin.mint{value: 0.5 ether}();
-        uint256 secondMintAmount = stablecoin.balanceOf(user1) -
-            firstMintAmount;
+        uint256 secondMintAmount = stablecoin.balanceOf(user1) - firstMintAmount;
 
         // Verify total position
         (uint256 collateral, uint256 debt) = stablecoin.vaults(user1);
@@ -192,9 +173,8 @@ contract SimpleStablecoinTest is Test {
         (uint256 collateral, uint256 debt) = stablecoin.vaults(user1);
 
         // Calculate liquidation price
-        uint256 liquidationPrice = (debt *
-            stablecoin.LIQUIDATION_THRESHOLD() *
-            1e8) / (collateral * stablecoin.RATIO_PRECISION());
+        uint256 liquidationPrice =
+            (debt * stablecoin.LIQUIDATION_THRESHOLD() * 1e8) / (collateral * stablecoin.RATIO_PRECISION());
 
         // Transfer tokens to liquidator for liquidation
         vm.stopPrank();

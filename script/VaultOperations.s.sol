@@ -7,8 +7,7 @@ import "../src/Stablecoin.sol";
 
 contract VaultOperations is Script {
     SimpleStablecoin stablecoin;
-    address constant STABLECOIN_ADDRESS =
-        0x8734D6f16e59F14973fB5170E0C9A1d511ea1aD1;
+    address constant STABLECOIN_ADDRESS = 0x8734D6f16e59F14973fB5170E0C9A1d511ea1aD1;
 
     function setUp() public {
         stablecoin = SimpleStablecoin(payable(STABLECOIN_ADDRESS));
@@ -38,9 +37,7 @@ contract VaultOperations is Script {
         stablecoin.repay(amount);
 
         // Log results
-        (uint256 newCollateral, uint256 newDebt) = stablecoin.vaults(
-            msg.sender
-        );
+        (uint256 newCollateral, uint256 newDebt) = stablecoin.vaults(msg.sender);
         console.log("Repaid", amount, "tokens");
         console.log("Collateral returned:", collateral - newCollateral);
         console.log("Remaining debt:", newDebt);
@@ -64,18 +61,10 @@ contract VaultOperations is Script {
     }
 
     function liquidatePosition(address user) public {
-        require(
-            stablecoin.getCurrentRatio(user) <
-                stablecoin.LIQUIDATION_THRESHOLD(),
-            "Position not liquidatable"
-        );
+        require(stablecoin.getCurrentRatio(user) < stablecoin.LIQUIDATION_THRESHOLD(), "Position not liquidatable");
 
         (uint256 collateral, uint256 debt) = stablecoin.vaults(user);
-        console.log(
-            "Attempting to liquidate position with %d collateral and %d debt",
-            collateral,
-            debt
-        );
+        console.log("Attempting to liquidate position with %d collateral and %d debt", collateral, debt);
 
         vm.broadcast();
         stablecoin.liquidate(user);

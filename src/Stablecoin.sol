@@ -21,12 +21,7 @@ contract SimpleStablecoin is ERC20, ReentrancyGuard {
     mapping(address => Vault) public vaults;
 
     event VaultUpdated(address indexed user, uint256 collateral, uint256 debt);
-    event Liquidated(
-        address indexed user,
-        address indexed liquidator,
-        uint256 debt,
-        uint256 collateralSeized
-    );
+    event Liquidated(address indexed user, address indexed liquidator, uint256 debt, uint256 collateralSeized);
 
     constructor(address _priceFeed) ERC20("Simple USD", "sUSD") {
         priceFeed = AggregatorV3Interface(_priceFeed);
@@ -34,7 +29,7 @@ contract SimpleStablecoin is ERC20, ReentrancyGuard {
 
     // Get ETH/USD price from Chainlink
     function getEthPrice() public view returns (uint256) {
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        (, int256 price,,,) = priceFeed.latestRoundData();
         require(price > 0, "Invalid price");
         return uint256(price);
     }
@@ -48,15 +43,11 @@ contract SimpleStablecoin is ERC20, ReentrancyGuard {
 
         uint256 newCollateral = vault.collateralAmount + msg.value;
         uint256 collateralValue = (newCollateral * ethPrice) / 1e8;
-        uint256 maxSafeDebt = (collateralValue * RATIO_PRECISION) /
-            COLLATERAL_RATIO;
+        uint256 maxSafeDebt = (collateralValue * RATIO_PRECISION) / COLLATERAL_RATIO;
 
         uint256 additionalDebt = maxSafeDebt;
         if (vault.debtAmount > 0) {
-            require(
-                maxSafeDebt > vault.debtAmount,
-                "No additional debt available"
-            );
+            require(maxSafeDebt > vault.debtAmount, "No additional debt available");
             additionalDebt = maxSafeDebt - vault.debtAmount;
         }
 
@@ -80,7 +71,7 @@ contract SimpleStablecoin is ERC20, ReentrancyGuard {
         if (vault.debtAmount == 0) {
             uint256 collateralToReturn = vault.collateralAmount;
             vault.collateralAmount = 0;
-            (bool success, ) = msg.sender.call{value: collateralToReturn}("");
+            (bool success,) = msg.sender.call{value: collateralToReturn}("");
             require(success, "ETH transfer failed");
         }
 
@@ -91,31 +82,22 @@ contract SimpleStablecoin is ERC20, ReentrancyGuard {
     function liquidate(address user) external nonReentrant {
         Vault storage vault = vaults[user];
         require(vault.debtAmount > 0, "No debt to liquidate");
-        require(
-            getCurrentRatio(user) < LIQUIDATION_THRESHOLD,
-            "Position not liquidatable"
-        );
+        require(getCurrentRatio(user) < LIQUIDATION_THRESHOLD, "Position not liquidatable");
 
         uint256 debtToRepay = vault.debtAmount;
-        require(
-            balanceOf(msg.sender) >= debtToRepay,
-            "Insufficient balance to liquidate"
-        );
+        require(balanceOf(msg.sender) >= debtToRepay, "Insufficient balance to liquidate");
 
         uint256 ethPrice = getEthPrice();
         uint256 collateralToSeize = (debtToRepay * 1e8) / ethPrice;
 
-        require(
-            collateralToSeize <= vault.collateralAmount,
-            "Not enough collateral"
-        );
+        require(collateralToSeize <= vault.collateralAmount, "Not enough collateral");
 
         vault.collateralAmount = 0;
         vault.debtAmount = 0;
 
         _burn(msg.sender, debtToRepay);
 
-        (bool success, ) = msg.sender.call{value: collateralToSeize}("");
+        (bool success,) = msg.sender.call{value: collateralToSeize}("");
         require(success, "ETH transfer failed");
 
         emit Liquidated(user, msg.sender, debtToRepay, collateralToSeize);
