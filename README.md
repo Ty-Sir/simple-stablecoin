@@ -1,7 +1,8 @@
 ## Simple Stable Coin
 
-Demonstrates a simple-version of an overcollateralized stablecoin. This stablecoin has the following features:
 **NOT PRODUCTION READY**
+
+Demonstrates a simple-version of an overcollateralized stablecoin. This stablecoin has the following features:
 
 1. ETH Collateralization
 
